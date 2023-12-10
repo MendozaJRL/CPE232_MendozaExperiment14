@@ -1,0 +1,5 @@
+[web_servers]
+192.168.56.105	ansible_connection=ssh
+
+[db_servers]
+192.168.56.109	ansible_connection=ssh

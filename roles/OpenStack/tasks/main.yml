@@ -1,0 +1,14 @@
+---
+# tasks file for roles/OpenStack
+
+- name: Execute install_Keystone.yml
+  ansible.builtin.include_tasks:
+    file: install_Keystone.yml
+
+- name: Execute install_Glance.yml
+  ansible.builtin.include_tasks:
+    file: install_Glance.yml
+
+- name: Execute install_Nova.yml
+  ansible.builtin.include_tasks:
+    file: install_Nova.yml

@@ -1,0 +1,79 @@
+
+# Tasks to Install Keystone for Ubuntu
+
+- name: Install Keystone for Ubuntu
+  apt:
+    name:
+      - keystone
+    state: latest
+  when: ansible_distribution == "Ubuntu"
+
+# Tasks to Install Keystone for CentOS
+
+- name: Install Keystone for Centos
+  yum:
+    name:
+      - openstack-keystone
+    state: latest
+  when: ansible_distribution == "CentOS"
+
+# Tasks to Configure the Keystone Service
+
+- name: Modifying Default Password on the Configuration File
+  lineinfile:
+    dest: /etc/keystone/keystone.conf
+    insertafter: '\[database\]'
+    regexp: 'connection = mysql+pymysql://keystone:KEYSTONE_DBPASS@controller/keystone'
+    line: 'connection = mysql+pymysql://keystone:tipqc@controller/keystone'
+    backup: yes
+    backrefs: yes
+  when: ansible_distribution == "Ubuntu"
+
+- name: Modifying Default Provider Configuration File
+  lineinfile:
+    dest: /etc/keystone/keystone.conf
+    insertafter: '\[token\]'
+    line: 'provider = fernet'
+    backup: yes
+  when: ansible_distribution == "Ubuntu"
+
+- name: Populate the Identity Service Database
+  shell: sudo keystone-manage db_sync
+  when: ansible_distribution == "Ubuntu"
+
+- name: Initialize Fernet Key Repositories
+  shell: keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
+  when: ansible_distribution == "Ubuntu"
+
+- name: Initialize Fernet Key Repositories
+  shell: keystone-manage credential_setup --keystone-user keystone --keystone-group keystone
+  when: ansible_distribution == "Ubuntu"
+
+- name: Bootstrap the Identity Service
+  shell:
+    keystone-manage bootstrap --bootstrap-password tipqc \
+    --bootstrap-admin-url http://controller:35357/v3/ \
+    --bootstrap-internal-url http://controller:5000/v3/ \
+    --bootstrap-public-url http://controller:5000/v3/ \
+    --bootstrap-region-id RegionOne
+  when: ansible_distribution == "Ubuntu"
+
+- name: Configuring the Apache HTTP Server
+  lineinfile:
+    dest: /etc/apache2/apache2.conf
+    line: 'ServerName controller'
+    state: present
+    backup: yes
+  when: ansible_distribution == "Ubuntu"
+
+- name: Configure Administrative Account Environmental Variables
+  shell:
+    export OS_USERNAME=admin
+    export OS_PASSWORD=tipqc
+    export OS_PROJECT_NAME=admin
+    export OS_USER_DOMANI_NAME=Default
+    export OS_PROJECT_DOMAIN_NAME=Default
+    export OS_AUTH_URL=http://controller:5000/v3
+    export OS_IDENTITY_API_VERSION=3
+  when: ansible_distribution == "Ubuntu"
+
